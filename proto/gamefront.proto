@@ -1,0 +1,15 @@
+syntax = "proto3";
+package gamefront;
+
+option go_package = "../grpc";
+message EntryGameRequest {
+  string name = 1;
+}
+
+message EntryGameResponse {
+  string ticket_id = 1;
+}
+
+service GameFrontService {
+  rpc EntryGame(EntryGameRequest) returns (stream EntryGameResponse) {}
+}
