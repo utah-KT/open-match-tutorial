@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: director
+  namespace: open-match-test
+  labels:
+    app: director
+spec:
+  containers:
+  - name: director
+    image: open-match-tutorial-director:latest
+    imagePullPolicy: Never

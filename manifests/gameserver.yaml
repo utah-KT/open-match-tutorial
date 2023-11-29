@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gameserver
+  namespace: open-match-test
+  labels:
+    app: gameserver
+spec:
+  containers:
+  - name: gameserver
+    image: open-match-tutorial-gameserver:latest
+    ports:
+    - containerPort: 7654
+    imagePullPolicy: Never
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: gameserver
+  namespace: open-match-test
+  labels:
+    app: gameserver
+spec:
+  selector:
+    app: gameserver
+  type: NodePort
+  ports:
+  - name: grpc
+    protocol: TCP
+    port: 7654
+    targetPort: 7654
+    nodePort: 30054

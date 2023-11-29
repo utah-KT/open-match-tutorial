@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mmf
+  namespace: open-match-test
+  labels:
+    app: mmf
+spec:
+  containers:
+  - name: mmf
+    image: open-match-tutorial-mmf:latest
+    ports:
+    - containerPort: 50502
+    imagePullPolicy: Never
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: mmf
+  namespace: open-match-test
+  labels:
+    app: mmf
+spec:
+  selector:
+    app: mmf
+  type: ClusterIP
+  ports:
+  - name: grpc
+    protocol: TCP
+    port: 50502

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gamefront
+  namespace: open-match-test
+  labels:
+    app: gamefront
+spec:
+  containers:
+  - name: gamefront
+    image: open-match-tutorial-front:latest
+    ports:
+    - containerPort: 54321
+    imagePullPolicy: Never
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: gamefront
+  namespace: open-match-test
+  labels:
+    app: gamefront
+spec:
+  selector:
+    app: gamefront
+  type: NodePort
+  ports:
+  - name: grpc
+    protocol: TCP
+    port: 54321
+    targetPort: 54321
+    nodePort: 30021
