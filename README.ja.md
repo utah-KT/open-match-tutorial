@@ -91,3 +91,9 @@ userAとuserBは以下のようなレスポンスを受け取り、これで想�
 }
 ```
 
+
+## cleanup
+`kubectl delete namespace open-match-test` を実行することでチュートリアル用のk8s componentsだけを削除することができます。
+
+open match も uninstall する場合は `make clean` を実行してください。
+

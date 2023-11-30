@@ -88,3 +88,8 @@ UserA and UserB got response when the bot was added. It means the room is ready.
 }
 ```
 
+## cleanup
+If you cleanup only tutorial components, run `kubectl delete namespace open-match-test`.
+
+`make clean` command uninstall Open Match too.
+
