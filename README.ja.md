@@ -1,6 +1,25 @@
 # OpenMatchTutorial
-[Open Match](https://github.com/googleforgames/open-match) の backfill 機能を試すためのものです。
-シーケンス図は[こちら](seq.md).
+[Open Match](https://github.com/googleforgames/open-match) の backfill 機能を試すためのものです。以下の図のような構成を作り、[こちらのシナリオ](seq.md)のようなデモを行うことができます。
+
+```mermaid
+C4Context
+title Open Match Tutorial
+
+Person(userA, "UserA", "grpcurl")
+Person(userB, "UserB", "grpcurl")
+Boundary(minikube, "Minikube", "") {
+  Boundary(OpenMatchTestNamespace, "open-match-test", "namespace") {
+    Container(GameFront, "GameFront")
+    Container(mmf, "MatchMakingFunction")
+    Container(Director, "Director")
+    Container(DGS, "GameServer")
+  }
+  Boundary(OpenMatchNamespace, "open-match", "namespace") {
+    System(OpenMatch, "OpenMatchCore")
+  }
+}
+```
+
 
 ## prerequirements
 - [helm](https://helm.sh/)

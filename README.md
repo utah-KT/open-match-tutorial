@@ -1,6 +1,25 @@
 # OpenMatchTutorial
 Test [Open Match](https://github.com/googleforgames/open-match) backfill.
-The sequence of this example is [here](seq.md).
+Build matching system with Open Match for tutorial scenario like [this](seq.md).
+
+```mermaid
+C4Context
+title Open Match Tutorial
+
+Person(userA, "UserA", "grpcurl")
+Person(userB, "UserB", "grpcurl")
+Boundary(minikube, "Minikube", "") {
+  Boundary(OpenMatchTestNamespace, "open-match-test", "namespace") {
+    Container(GameFront, "GameFront")
+    Container(mmf, "MatchMakingFunction")
+    Container(Director, "Director")
+    Container(DGS, "GameServer")
+  }
+  Boundary(OpenMatchNamespace, "open-match", "namespace") {
+    System(OpenMatch, "OpenMatchCore")
+  }
+}
+```
 
 ## prerequirements
 - [helm](https://helm.sh/)
