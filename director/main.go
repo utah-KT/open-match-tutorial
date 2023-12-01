@@ -175,7 +175,7 @@ func main() {
 		Name:  "default",
 		Pools: []*ompb.Pool{pool},
 	}
-	for range time.Tick(1 * time.Second) {
+	for range time.Tick(250 * time.Millisecond) {
 		matches, err := director.Fetch(profile)
 		if err != nil {
 			log.Printf("Failed to fetch matches for profile %v, got %s", profile.GetName(), err.Error())

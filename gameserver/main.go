@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	Timeout            = 60
+	Timeout            = 30
 	RequiredMemberNum  = 3
 	omFrontendEndpoint = "open-match-frontend.open-match.svc.cluster.local:50504"
 )
@@ -94,7 +94,7 @@ func (gs *GameServer) deleteBackfill() error {
 }
 
 func (gs *GameServer) ackAndcheckTimeout() {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	timer := time.After(time.Duration(Timeout) * time.Second)
 	defer close(gs.TimerCh)
 	log.Println("start timer")

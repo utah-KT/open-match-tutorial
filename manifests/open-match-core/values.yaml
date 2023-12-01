@@ -3,8 +3,8 @@ frontend:
 backend:
   replicas: 1
 open-match-core:
-  registrationInterval: 1500ms
-  proposalCollectionInterval: 10s
+  registrationInterval: 300ms
+  proposalCollectionInterval: 1s
   pendingReleaseTimeout: 1m
   assignedDeleteTimeout: 10m
 open-match-customize:
