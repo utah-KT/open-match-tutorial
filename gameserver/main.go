@@ -37,6 +37,8 @@ type GameServer struct {
 	BackfillID             string
 	LastBackfillGeneration int64
 	FrontendClient         ompb.FrontendServiceClient
+	RoomStateMutex         sync.Mutex
+	BackfillStateMutex     sync.Mutex
 }
 
 func NewGameServer(conn *grpc.ClientConn) *GameServer {
@@ -52,12 +54,16 @@ func (gs *GameServer) initRoom() {
 		Members: map[string]*pb.Member{},
 		Ready:   false,
 	}
+	gs.RoomStateMutex.Lock()
+	gs.BackfillStateMutex.Lock()
 	gs.RoomState = room
 	gs.RoomCh = make(chan struct{})
 	gs.MemberChannels = map[string]chan *pb.JoinResponse{}
 	gs.TimerCh = make(chan struct{})
 	gs.BackfillID = ""
 	gs.LastBackfillGeneration = 0
+	gs.BackfillStateMutex.Unlock()
+	gs.RoomStateMutex.Unlock()
 	go gs.watchRoomState()
 }
 
@@ -88,9 +94,14 @@ func (gs *GameServer) deleteBackfill() error {
 	if gs.BackfillID == "" {
 		return nil
 	}
-	gs.BackfillID = ""
+	gs.BackfillStateMutex.Lock()
+	defer gs.BackfillStateMutex.Unlock()
 	_, err := gs.FrontendClient.DeleteBackfill(context.Background(), &ompb.DeleteBackfillRequest{BackfillId: gs.BackfillID})
-	return err
+	if err != nil {
+		return err
+	}
+	gs.BackfillID = ""
+	return nil
 }
 
 func (gs *GameServer) ackAndcheckTimeout() {
@@ -117,6 +128,8 @@ func (gs *GameServer) ackAndcheckTimeout() {
 					log.Printf("error on AcknowledgeBackfill (%s)", err.Error())
 					continue
 				}
+				gs.RoomStateMutex.Lock()
+				gs.BackfillStateMutex.Lock()
 				gs.BackfillID = res.Backfill.Id
 				for _, ticket := range res.Tickets {
 					name, err := getName(ticket)
@@ -130,6 +143,8 @@ func (gs *GameServer) ackAndcheckTimeout() {
 					gs.LastBackfillGeneration = res.Backfill.Generation
 					gs.RoomCh <- struct{}{}
 				}
+				gs.BackfillStateMutex.Unlock()
+				gs.RoomStateMutex.Unlock()
 			}
 		case <-timer:
 			ticker.Stop()
@@ -140,9 +155,8 @@ func (gs *GameServer) ackAndcheckTimeout() {
 					Name:  name,
 					Ready: true,
 				}
-				gs.RoomState.Members[name] = bot
+				gs.addMember(name, bot)
 			}
-			gs.RoomState.Ready = true
 			gs.RoomCh <- struct{}{}
 		}
 	}
@@ -160,32 +174,50 @@ func getName(ticket *ompb.Ticket) (string, error) {
 
 func (gs *GameServer) addMembers(memberTickets []*pb.MemberTicket) {
 	for _, mt := range memberTickets {
-		gs.RoomState.Members[mt.TicketId] = &pb.Member{
+		m := &pb.Member{
 			Name:  mt.Name,
 			Ready: false,
 		}
+		gs.addMember(mt.TicketId, m)
 	}
 	gs.RoomCh <- struct{}{}
 }
 
+func (gs *GameServer) addMember(ticketID string, member *pb.Member) {
+	gs.RoomStateMutex.Lock()
+	defer gs.RoomStateMutex.Unlock()
+	gs.RoomState.Members[ticketID] = member
+	gs.updateRoomReadyWithoutLock()
+}
+
 func (gs *GameServer) Allocate(ctx context.Context, req *pb.AllocateRequest) (*emptypb.Empty, error) {
 	gs.addMembers(req.Tickets)
+	gs.BackfillStateMutex.Lock()
 	gs.BackfillID = req.BackfillId
+	gs.BackfillStateMutex.Unlock()
 	go gs.ackAndcheckTimeout()
 	return &emptypb.Empty{}, nil
 }
 
 func (gs *GameServer) joinRoom(ticketID string) error {
+	gs.RoomStateMutex.Lock()
+	defer gs.RoomStateMutex.Unlock()
 	if gs.RoomState.Members[ticketID] == nil {
 		return fmt.Errorf("ticket id %s is not assigned", ticketID)
 	}
 	gs.RoomState.Members[ticketID].Ready = true
-	roomReady := len(gs.RoomState.Members) == RequiredMemberNum
-	for _, member := range gs.RoomState.Members {
-		roomReady = roomReady && member.Ready
-	}
-	gs.RoomState.Ready = roomReady
+	gs.updateRoomReadyWithoutLock()
 	return nil
+}
+
+func (gs *GameServer) updateRoomReadyWithoutLock() {
+	roomReady := len(gs.RoomState.Members) == RequiredMemberNum
+	if roomReady {
+		for _, member := range gs.RoomState.Members {
+			roomReady = roomReady && member.Ready
+		}
+		gs.RoomState.Ready = roomReady
+	}
 }
 
 func (gs *GameServer) entryResponseFromRoomState() *pb.JoinResponse {
