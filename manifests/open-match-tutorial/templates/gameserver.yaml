@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "open-match-tutorial.gameserverName" . }}
+  namespace: {{ .Release.Namespace }}
+  # annotations: 
+  #   checksum/config:
+  labels:
+    {{- include "open-match-tutorial.labels" . | nindent 4 }}
+    component: gameserver
+spec:
+  replicas: {{ .Values.gameserver.replicas }}
+  selector:
+    matchLabels:
+      {{- include "open-match-tutorial.selectorLabels" . | nindent 6 }}
+      component: gameserver
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      annotations:
+      labels:
+        {{- include "open-match-tutorial.selectorLabels" . | nindent 8 }}
+        component: gameserver
+    spec:
+      containers:
+      - name: gameserver
+        image: "{{ .Values.gameserver.images }}:{{ .Values.gameserver.tag }}"
+        ports:
+        - containerPort: {{ .Values.gameserver.port }}
+        imagePullPolicy: {{ .Values.gameserver.pullPolicy }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "open-match-tutorial.gameserverName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "open-match-tutorial.labels" . | nindent 4 }}
+    component: gameserver
+spec:
+  selector:
+    {{- include "open-match-tutorial.selectorLabels" . | nindent 4 }}
+    component: gameserver
+  type: {{ .Values.gameserver.serviceType }}
+{{- if eq .Values.gameserver.serviceType "ClusterIP" }}
+  clusterIP: None
+{{- end }}
+  ports:
+  - name: grpc
+    protocol: TCP
+    port: {{ .Values.gameserver.port }}
+{{- if eq .Values.gameserver.serviceType "NodePort" }}
+    nodePort: {{ .Values.gameserver.nodePort }}
+{{- end }}

@@ -1,0 +1,27 @@
+director:
+  images: open-match-tutorial-director
+  tag: latest
+  pullPolicy: Never
+gamefront:
+  replicas: 1
+  images: open-match-tutorial-front
+  tag: latest
+  port: 54321
+  pullPolicy: Never
+  serviceType: NodePort
+  nodePort: 30021
+gameserver:
+  replicas: 1
+  images: open-match-tutorial-gameserver
+  tag: latest
+  port: 7654
+  pullPolicy: Never
+  serviceType: NodePort
+  nodePort: 30054
+mmf:
+  replicas: 1
+  images: open-match-tutorial-mmf
+  tag: latest
+  port: 50502
+  pullPolicy: Never
+  serviceType: ClusterIP

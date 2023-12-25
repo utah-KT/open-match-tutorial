@@ -16,9 +16,9 @@ import (
 
 const (
 	omBackendEndpoint        = "open-match-backend.open-match.svc.cluster.local:50505"
-	functionHostName         = "mmf.open-match-test.svc.cluster.local"
+	functionHostName         = "open-match-tutorial-mmf.open-match-test.svc.cluster.local"
 	functionPort       int32 = 50502
-	gameServerEndpoint       = "gameserver.open-match-test.svc.cluster.local:7654"
+	gameServerEndpoint       = "open-match-tutorial-gameserver.open-match-test.svc.cluster.local:7654"
 	openSlotsKey             = "openSlots"
 	defaultPoolTag           = "default"
 )
@@ -179,7 +179,7 @@ func main() {
 		matches, err := director.Fetch(profile)
 		if err != nil {
 			log.Printf("Failed to fetch matches for profile %v, got %s", profile.GetName(), err.Error())
-			return
+			continue // wait mmf...
 		}
 		err = director.Assign(matches)
 		if err != nil {
