@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: {{ include "open-match-tutorial.gamefrontName" . }}
   namespace: {{ .Release.Namespace }}
-  # annotations: 
-  #   checksum/config:
   labels:
     {{- include "open-match-tutorial.labels" . | nindent 4 }}
     component: gamefront
@@ -18,6 +16,7 @@ spec:
     metadata:
       namespace: {{ .Release.Namespace }}
       annotations:
+        checksum/config: {{ tpl (.Files.Get "files/config.toml") . | sha256sum }}
       labels:
         {{- include "open-match-tutorial.selectorLabels" . | nindent 8 }}
         component: gamefront
