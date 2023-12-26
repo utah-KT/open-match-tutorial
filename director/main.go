@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/utah-KT/open-match-tutorials/config"
 	pb "github.com/utah-KT/open-match-tutorials/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,12 +16,7 @@ import (
 )
 
 const (
-	omBackendEndpoint        = "open-match-backend.open-match.svc.cluster.local:50505"
-	functionHostName         = "open-match-tutorial-mmf.open-match-test.svc.cluster.local"
-	functionPort       int32 = 50502
-	gameServerEndpoint       = "open-match-tutorial-gameserver.open-match-test.svc.cluster.local:7654"
-	openSlotsKey             = "openSlots"
-	defaultPoolTag           = "default"
+	openSlotsKey = "openSlots"
 )
 
 type Director struct {
@@ -36,8 +32,8 @@ func NewDirector(conn *grpc.ClientConn) *Director {
 func (d *Director) Fetch(p *ompb.MatchProfile) ([]*ompb.Match, error) {
 	req := &ompb.FetchMatchesRequest{
 		Config: &ompb.FunctionConfig{
-			Host: functionHostName,
-			Port: functionPort,
+			Host: config.Global.Mmf.Host,
+			Port: int32(config.Global.Mmf.Port),
 			Type: ompb.FunctionConfig_GRPC,
 		},
 		Profile: p,
@@ -86,7 +82,7 @@ func (d *Director) Assign(matches []*ompb.Match) error {
 					{
 						TicketIds: ticketIDs,
 						Assignment: &ompb.Assignment{
-							Connection: gameServerEndpoint,
+							Connection: config.Global.GameServer.Endpoint,
 						},
 					},
 				},
@@ -106,7 +102,7 @@ func (d *Director) Allocate(tickets []*ompb.Ticket, backfill *ompb.Backfill) err
 		backfillID = backfill.Id
 		log.Printf("with %s", backfillID)
 	}
-	conn, err := grpc.Dial(gameServerEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(config.Global.GameServer.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("Failed to connect to game server got %s", err.Error())
 	}
@@ -159,14 +155,15 @@ func getName(t *ompb.Ticket) (string, error) {
 }
 
 func main() {
-	conn, err := grpc.Dial(omBackendEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	config.Load()
+	conn, err := grpc.Dial(config.Global.OpenMatch.BackendEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to Open Match Backend, got %s", err.Error())
 	}
 
 	defer conn.Close()
 	director := NewDirector(conn)
-	tag := &ompb.TagPresentFilter{Tag: defaultPoolTag}
+	tag := &ompb.TagPresentFilter{Tag: config.Global.Matching.Tag}
 	pool := &ompb.Pool{
 		Name:              "default",
 		TagPresentFilters: []*ompb.TagPresentFilter{tag},

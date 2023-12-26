@@ -18,6 +18,8 @@ gameserver:
   pullPolicy: Never
   serviceType: NodePort
   nodePort: 30054
+  memberNum: 3
+  timeout: 30
 mmf:
   replicas: 1
   images: open-match-tutorial-mmf
@@ -25,3 +27,10 @@ mmf:
   port: 50502
   pullPolicy: Never
   serviceType: ClusterIP
+  name: default
+common:
+  tag: default
+  openMatch:
+    frontendEndpoint: "open-match-frontend.open-match.svc.cluster.local:50504"
+    backendEndpoint: "open-match-backend.open-match.svc.cluster.local:50505"
+    queryEndpoint: "open-match-query.open-match.svc.cluster.local:50503"

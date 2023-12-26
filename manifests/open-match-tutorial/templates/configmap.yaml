@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "open-match-tutorial.fullname" . }}
+  labels:
+    {{- include "open-match-tutorial.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+data:
+{{ tpl ((.Files.Glob "files/config.toml").AsConfig) . | indent 2 }}

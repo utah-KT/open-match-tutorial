@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/utah-KT/open-match-tutorials/config"
 	pb "github.com/utah-KT/open-match-tutorials/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -13,12 +14,6 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	ompb "open-match.dev/open-match/pkg/pb"
-)
-
-const (
-	Port               = 54321
-	omFrontendEndpoint = "open-match-frontend.open-match.svc.cluster.local:50504"
-	defaultPoolTag     = "default"
 )
 
 type GameFront struct {
@@ -33,14 +28,14 @@ func NewGameFrontEnd(conn *grpc.ClientConn) *GameFront {
 }
 
 func (gf *GameFront) requestCreateTicket(name string) (*ompb.Ticket, error) {
-	log.Printf("request create ticket (tag: %s)", defaultPoolTag)
+	log.Printf("request create ticket (tag: %s)", config.Global.Matching.Tag)
 	ext, err := createTicketExtensions(name)
 	if err != nil {
 		return nil, err
 	}
 	t := &ompb.Ticket{
 		SearchFields: &ompb.SearchFields{
-			Tags: []string{defaultPoolTag},
+			Tags: []string{config.Global.Matching.Tag},
 		},
 		Extensions: ext,
 	}
@@ -94,13 +89,14 @@ func (gf *GameFront) EntryGame(req *pb.EntryGameRequest, stream pb.GameFrontServ
 }
 
 func main() {
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", Port))
+	config.Load()
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Global.GameFront.Port))
 	if err != nil {
 		log.Fatalf("Could not start TCP server: %v", err)
 	}
-	conn, err := grpc.Dial(omFrontendEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(config.Global.OpenMatch.FrontendEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to Open Match Backend, got %s", err.Error())
+		log.Fatalf("Failed to connect to %s, got %s", config.Global.OpenMatch.FrontendEndpoint, err.Error())
 	}
 
 	defer conn.Close()

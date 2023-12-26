@@ -28,6 +28,13 @@ spec:
         ports:
         - containerPort: {{ .Values.gameserver.port }}
         imagePullPolicy: {{ .Values.gameserver.pullPolicy }}
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/open-match-tutorial
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{ include "open-match-tutorial.fullname" . }}
 ---
 kind: Service
 apiVersion: v1

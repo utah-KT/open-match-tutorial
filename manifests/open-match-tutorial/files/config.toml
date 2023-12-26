@@ -1,0 +1,16 @@
+[open_match]
+frontend_endpoint = "{{ .Values.common.openMatch.frontendEndpoint }}"
+backend_endpoint = "{{ .Values.common.openMatch.backendEndpoint }}"
+query_endpoint = "{{ .Values.common.openMatch.queryEndpoint }}"
+[matching]
+tag = "{{ .Values.common.tag }}"
+[gamefront]
+port = {{ .Values.gamefront.port }}
+[gameserver]
+member_num = {{ .Values.gameserver.memberNum }}
+timeout = {{ .Values.gameserver.timeout }}
+endpoint = "{{ include "open-match-tutorial.gameserverName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.gameserver.port }}"
+[mmf]
+port = {{ .Values.mmf.port }}
+name = "{{ .Values.mmf.name }}"
+host = "{{ include "open-match-tutorial.mmfName" . }}.{{ .Release.Namespace }}.svc.cluster.local"

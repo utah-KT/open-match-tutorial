@@ -3,6 +3,7 @@ module github.com/utah-KT/open-match-tutorials
 go 1.21.4
 
 require (
+	github.com/BurntSushi/toml v1.3.2
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2 // indirect
 	golang.org/x/net v0.14.0 // indirect

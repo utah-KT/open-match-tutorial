@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/utah-KT/open-match-tutorials/config"
 	"open-match.dev/open-match/pkg/matchfunction"
 	"open-match.dev/open-match/pkg/pb"
 
@@ -17,12 +18,7 @@ import (
 )
 
 const (
-	queryServiceAddress = "open-match-query.open-match.svc.cluster.local:50503"
-	serverPort          = 50502
-	defaultPoolTag      = "default"
-	openSlotsKey        = "openSlots"
-	mmfName             = "default"
-	RequiredMemberNum   = 3
+	openSlotsKey = "openSlots"
 )
 
 // MatchFunctionService implements pb.MatchFunctionServer because
@@ -68,8 +64,8 @@ func (s *MatchFunctionService) Run(req *pb.RunRequest, stream pb.MatchFunction_R
 // TODO: check all pool and add match score for evaluator.
 func makeMatches(profile *pb.MatchProfile, tickets map[string][]*pb.Ticket, backfills map[string][]*pb.Backfill) ([]*pb.Match, error) {
 	var matches []*pb.Match
-	validTickets := tickets[defaultPoolTag]
-	validBackfills := backfills[defaultPoolTag]
+	validTickets := tickets[config.Global.Matching.Tag]
+	validBackfills := backfills[config.Global.Matching.Tag]
 	id := 0
 	for _, backfill := range validBackfills {
 		if len(validTickets) == 0 {
@@ -100,12 +96,12 @@ func makeMatches(profile *pb.MatchProfile, tickets map[string][]*pb.Ticket, back
 		if ticketsNum == 0 {
 			break
 		}
-		matchedCount := RequiredMemberNum
-		if RequiredMemberNum > ticketsNum {
+		matchedCount := config.Global.GameServer.MemberNum
+		if config.Global.GameServer.MemberNum > ticketsNum {
 			matchedCount = ticketsNum
 		}
 		matched := validTickets[:matchedCount]
-		backfill, err := newBackfill(RequiredMemberNum - matchedCount)
+		backfill, err := newBackfill(config.Global.GameServer.MemberNum - matchedCount)
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +116,7 @@ func newMatch(id int, profile string, tickets []*pb.Ticket, b *pb.Backfill, allo
 	return &pb.Match{
 		MatchId:            fmt.Sprintf("%s-%s-%d", profile, time.Now().Format("2006-01-02T15:04:05.00"), id),
 		MatchProfile:       profile,
-		MatchFunction:      mmfName,
+		MatchFunction:      config.Global.Mmf.Name,
 		Tickets:            tickets,
 		Backfill:           b,
 		AllocateGameserver: allocateDGS,
@@ -132,7 +128,7 @@ func newBackfill(openSlots int) (*pb.Backfill, error) {
 		return nil, nil
 	}
 	searchFields := &pb.SearchFields{
-		Tags: []string{defaultPoolTag},
+		Tags: []string{config.Global.Matching.Tag},
 	}
 	b := &pb.Backfill{
 		SearchFields: searchFields,
@@ -177,7 +173,8 @@ func getOpenSlots(b *pb.Backfill) (int, error) {
 }
 
 func main() {
-	conn, err := grpc.Dial(queryServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	config.Load()
+	conn, err := grpc.Dial(config.Global.OpenMatch.QueryEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to Open Match Query, got %s", err.Error())
 	}
@@ -189,12 +186,12 @@ func main() {
 
 	server := grpc.NewServer()
 	pb.RegisterMatchFunctionServer(server, &mmfService)
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", serverPort))
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Global.Mmf.Port))
 	if err != nil {
-		log.Fatalf("TCP net listener initialization failed for port %v, got %s", serverPort, err.Error())
+		log.Fatalf("TCP net listener initialization failed for port %v, got %s", config.Global.Mmf.Port, err.Error())
 	}
 
-	log.Printf("TCP net listener initialized for port %v", serverPort)
+	log.Printf("TCP net listener initialized for port %v", config.Global.Mmf.Port)
 	err = server.Serve(ln)
 	if err != nil {
 		log.Fatalf("gRPC serve failed, got %s", err.Error())

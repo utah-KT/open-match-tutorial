@@ -26,3 +26,10 @@ spec:
       - name: director
         image: "{{ .Values.director.images }}:{{ .Values.director.tag }}"
         imagePullPolicy: {{ .Values.director.pullPolicy }}
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/open-match-tutorial
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{ include "open-match-tutorial.fullname" . }}

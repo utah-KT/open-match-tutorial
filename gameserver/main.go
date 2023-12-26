@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/utah-KT/open-match-tutorials/config"
 	pb "github.com/utah-KT/open-match-tutorials/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,12 +16,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	ompb "open-match.dev/open-match/pkg/pb"
-)
-
-const (
-	Timeout            = 30
-	RequiredMemberNum  = 3
-	omFrontendEndpoint = "open-match-frontend.open-match.svc.cluster.local:50504"
 )
 
 type Room struct {
@@ -106,7 +101,7 @@ func (gs *GameServer) deleteBackfill() error {
 
 func (gs *GameServer) ackAndcheckTimeout() {
 	ticker := time.NewTicker(500 * time.Millisecond)
-	timer := time.After(time.Duration(Timeout) * time.Second)
+	timer := time.After(time.Duration(config.Global.GameServer.Timeout) * time.Second)
 	defer close(gs.TimerCh)
 	log.Println("start timer")
 	for {
@@ -149,7 +144,7 @@ func (gs *GameServer) ackAndcheckTimeout() {
 		case <-timer:
 			ticker.Stop()
 			gs.deleteBackfill()
-			for i := 1; len(gs.RoomState.Members) < RequiredMemberNum; i++ {
+			for i := 1; len(gs.RoomState.Members) < config.Global.GameServer.MemberNum; i++ {
 				name := fmt.Sprintf("bot%d", i)
 				bot := &pb.Member{
 					Name:  name,
@@ -211,7 +206,7 @@ func (gs *GameServer) joinRoom(ticketID string) error {
 }
 
 func (gs *GameServer) updateRoomReadyWithoutLock() {
-	roomReady := len(gs.RoomState.Members) == RequiredMemberNum
+	roomReady := len(gs.RoomState.Members) == config.Global.GameServer.MemberNum
 	if roomReady {
 		for _, member := range gs.RoomState.Members {
 			roomReady = roomReady && member.Ready
@@ -221,7 +216,7 @@ func (gs *GameServer) updateRoomReadyWithoutLock() {
 }
 
 func (gs *GameServer) entryResponseFromRoomState() *pb.JoinResponse {
-	members := make([]*pb.Member, 0, RequiredMemberNum)
+	members := make([]*pb.Member, 0, config.Global.GameServer.MemberNum)
 	for _, member := range gs.RoomState.Members {
 		members = append(members, member)
 	}
@@ -260,13 +255,14 @@ func (gs *GameServer) Join(req *pb.JoinRequest, stream pb.GameServerService_Join
 }
 
 func main() {
+	config.Load()
 	ln, err := net.Listen("tcp", ":7654")
 	if err != nil {
 		log.Fatalf("Could not start TCP server: %v", err)
 	}
-	conn, err := grpc.Dial(omFrontendEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(config.Global.OpenMatch.FrontendEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to Open Match Backend, got %s", err.Error())
+		log.Fatalf("Failed to connect to %s, got %s", config.Global.OpenMatch.FrontendEndpoint, err.Error())
 	}
 
 	defer conn.Close()
