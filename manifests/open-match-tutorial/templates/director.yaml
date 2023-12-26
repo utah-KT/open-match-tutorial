@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "open-match-tutorial.directorName" . }}
+  namespace: {{ .Release.Namespace }}
+  # annotations: 
+  #   checksum/config:
+  labels:
+    {{- include "open-match-tutorial.labels" . | nindent 4 }}
+    component: director
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "open-match-tutorial.selectorLabels" . | nindent 6 }}
+      component: director
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      annotations:
+      labels:
+        {{- include "open-match-tutorial.selectorLabels" . | nindent 8 }}
+        component: director
+    spec:
+      containers:
+      - name: director
+        image: "{{ .Values.director.images }}:{{ .Values.director.tag }}"
+        imagePullPolicy: {{ .Values.director.pullPolicy }}
