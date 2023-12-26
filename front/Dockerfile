@@ -1,9 +1,8 @@
-FROM golang:alpine
+FROM golang:1.21.4
 WORKDIR /workspace
 
 COPY . /workspace
 WORKDIR /workspace/front
-RUN go mod tidy
 RUN go build -o front .
 
 CMD ["./front"]
