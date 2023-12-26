@@ -16,11 +16,7 @@ clean: change-context uninstall-openmatch
 	kubectl delete namespace open-match-test
 
 apply: change-context
-	kubectl create namespace open-match-test --dry-run=client -o yaml | kubectl apply -f -
-	kubectl apply -f manifests/gameserver.yaml
-	kubectl apply -f manifests/mmf.yaml
-	kubectl apply -f manifests/gamefront.yaml
-	kubectl apply -f manifests/director.yaml
+	helm install -f manifests/open-match-tutorial/values.yaml open-match-tutorial --create-namespace -n open-match-test manifests/open-match-tutorial
 
 proto:
 	protoc --go_out=./grpc --go-grpc_out=./grpc proto/*.proto
