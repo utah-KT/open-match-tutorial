@@ -13,6 +13,7 @@ uninstall-openmatch: change-context
 	helm uninstall open-match -n open-match
 
 clean: change-context uninstall-openmatch
+	helm uninstall open-match-tutorial -n open-match-test
 	kubectl delete namespace open-match-test
 
 apply: change-context
