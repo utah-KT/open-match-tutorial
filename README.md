@@ -30,13 +30,11 @@ Boundary(minikube, "Minikube", "") {
 
 ## How to run
 ### install and setup components
-1. build images
-    - run `make build`
-2. install open match
+1. install open match (if you need)
     - run `CONTEXT=(k8s context) VERSION=(Open Match version) make install-openmatch`
       - default CONTEXT is open-match-test
       - default VERSION is 1.8.0
-3. apply manifests
+2. apply manifests
     - run `make apply`
 
 ### request match making

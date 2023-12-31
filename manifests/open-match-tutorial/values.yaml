@@ -1,31 +1,31 @@
 director:
-  images: open-match-tutorial-director
+  images: utahkt/open-match-tutorial-director
   tag: latest
-  pullPolicy: Never
+  pullPolicy: Always
 gamefront:
   replicas: 1
-  images: open-match-tutorial-front
+  images: utahkt/open-match-tutorial-front
   tag: latest
   port: 54321
-  pullPolicy: Never
+  pullPolicy: Always
   serviceType: NodePort
   nodePort: 30021
 gameserver:
   replicas: 1
-  images: open-match-tutorial-gameserver
+  images: utahkt/open-match-tutorial-gameserver
   tag: latest
   port: 7654
-  pullPolicy: Never
+  pullPolicy: Always
   serviceType: NodePort
   nodePort: 30054
   memberNum: 3
   timeout: 30
 mmf:
   replicas: 1
-  images: open-match-tutorial-mmf
+  images: utahkt/open-match-tutorial-mmf
   tag: latest
   port: 50502
-  pullPolicy: Never
+  pullPolicy: Always
   serviceType: ClusterIP
   name: default
 common:
